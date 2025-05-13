@@ -21,6 +21,7 @@ const transporter = nodemailer.createTransport({
 });
 
 app.post("/send-email", (req, res) => {
+  console.log('Received in /send-email:', req.body); // Added for debugging
   const { name, phoneNumber, topMajors, confidenceLevel, language, isResultsEmail } = req.body;
 
   if (!name || !phoneNumber) {
@@ -29,7 +30,7 @@ app.post("/send-email", (req, res) => {
 
   let mailOptions;
 
-  if (isResultsEmail) {
+  if (req.body.isResultsEmail === true) {
     // This is the results email
     if (!topMajors || !confidenceLevel) {
       return res.status(400).json({ error: "Top majors and confidence level are required for results email." });
