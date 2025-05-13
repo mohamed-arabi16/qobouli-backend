@@ -21,26 +21,51 @@ const transporter = nodemailer.createTransport({
 });
 
 app.post("/send-email", (req, res) => {
-  const { name, phoneNumber } = req.body;
+  const { name, phoneNumber, topMajors, confidenceLevel, language, isResultsEmail } = req.body;
 
   if (!name || !phoneNumber) {
     return res.status(400).json({ error: "Name and phone number are required." });
   }
 
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
-    to: process.env.EMAIL_USER,
-    subject: "New Form Submission - AI Recommendation Tool",
-    html: `
-      <p>Hello,</p>
-      <p>You have received a new submission:</p>
-      <ul>
-        <li><strong>Name:</strong> ${name}</li>
-        <li><strong>Phone Number:</strong> ${phoneNumber}</li>
-      </ul>
-      <p>Regards,<br/>Qobouli Bot</p>
-    `,
-  };
+  let mailOptions;
+
+  if (isResultsEmail) {
+    // This is the results email
+    if (!topMajors || !confidenceLevel) {
+      return res.status(400).json({ error: "Top majors and confidence level are required for results email." });
+    }
+    mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: process.env.EMAIL_USER, // Sending to yourself
+      subject: `AI Tool Results for ${name} - ${phoneNumber}`,
+      html: `
+        <p>Hello,</p>
+        <p>Test results for <strong>${name}</strong> (Phone: ${phoneNumber}):</p>
+        <p><strong>Language of Test:</strong> ${language || 'Not specified'}</p>
+        <p><strong>Top Recommended Majors:</strong></p>
+        <pre>${topMajors}</pre> 
+        <p><strong>Confidence Level:</strong> ${confidenceLevel}</p>
+        <br/>
+        <p>Regards,<br/>Qobouli Bot</p>
+      `,
+    };
+  } else {
+    // This is the initial contact email
+    mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: process.env.EMAIL_USER,
+      subject: "New Form Submission - AI Recommendation Tool",
+      html: `
+        <p>Hello,</p>
+        <p>You have received a new submission:</p>
+        <ul>
+          <li><strong>Name:</strong> ${name}</li>
+          <li><strong>Phone Number:</strong> ${phoneNumber}</li>
+        </ul>
+        <p>Regards,<br/>Qobouli Bot</p>
+      `,
+    };
+  }
 
   transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
